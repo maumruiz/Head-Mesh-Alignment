@@ -13,7 +13,8 @@ class AlignmentApp(Frame):
           self.Centre()
           
 
-          (mesh1VPos, mesh1VColor, mesh1ITris) = loadOffFile('meshes/source.off')
+          mesh1 = loadOffFile('meshes/source.off')
+          mesh1.performDisplayUpdate()
           
 
           layout = Layout(self, self.glCanvas)

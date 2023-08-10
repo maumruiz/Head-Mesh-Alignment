@@ -1,4 +1,5 @@
 import numpy as np
+from core.mesh import Mesh
 
 # Load files with .off extension
 def loadOffFile(filename):
@@ -40,5 +41,6 @@ def loadOffFile(filename):
     fin.close()
     VPos = np.array(VPos, np.float64)
     VColors = np.array(VColors, np.float64)
-    ITris = np.array(ITris, np.float64)
-    return (VPos, VColors, ITris)
+    ITris = np.array(ITris, np.int32)
+
+    return Mesh(VPos, VColors, ITris)
