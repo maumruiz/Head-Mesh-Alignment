@@ -26,6 +26,7 @@ class AlignmentApp(Frame):
           layout.bindViewMesh2Button(self.glCanvas.viewTargetMesh)
           layout.bindAlignCentroidsButton(self.glCanvas.centerMeshes)
           layout.bindFindCorrespondencesButton(self.glCanvas.findCorrespondences)
+          layout.bindComputeProcrustesButton(self.glCanvas.computeProcrustes)
 
           self.glCanvas.viewSourceMesh(None)
           

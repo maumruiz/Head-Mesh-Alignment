@@ -9,6 +9,13 @@ def getCentroid(points):
 
 # Calculate the correspondences between points in two sets of 3D data points
 # by performing a nearest neighbor search.
+# INPUTS
+# - X: 3 x M matrix
+# - Y: 3 x N matrix
+# - Cx and Cy: 3 x 1 vectors
+# - Rx: 3 x 3 estimated rotation matrix for X
+# OUTPUT:
+# - indexes: an array N with correspondences
 def getCorrespondences(X, Y, Cx, Cy, Rx):
     Xtransformed = np.dot(Rx, X-Cx)
     Ytransformed = Y - Cy
@@ -22,3 +29,19 @@ def getCorrespondences(X, Y, Cx, Cy, Rx):
     # Find nearest correspondences
     indexes = np.argmin(D, 1)
     return indexes
+
+# Find the best fitting similarity transformation (rotation and translation) between two
+# sets of 3D data points 'X' and 'Y' given a set of correspondence indices.
+def getProcrustesAlignment(X, Y, idx):
+    # Calculate centroids
+    Cx = getCentroid(X)
+    Cy = getCentroid(Y[:, idx])
+    # Center the data
+    X_ = X - Cx
+    Y_ = Y[:, idx] - Cy
+    # Compute Singular Value Decomposition
+    (U, S, Vt) = np.linalg.svd(np.dot(Y_, X_.T)) 
+    # Calculate the rotation by mutiplying the left singular vectors 'U' with the
+    # transpose of the right singular vectors 'R'
+    R = np.dot(U, Vt)
+    return (Cx, Cy, R)

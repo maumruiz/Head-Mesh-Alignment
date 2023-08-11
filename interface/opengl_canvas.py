@@ -10,7 +10,7 @@ import wx
 
 from core.camera import MousePolarCamera
 from core.data_structures import BBox3D
-from core.icp import getCentroid, getCorrespondences
+from core.icp import getCentroid, getCorrespondences, getProcrustesAlignment
 
 class OpenGLCanvas(glcanvas.GLCanvas):
      def __init__(self, parent, sourceMesh, targetMesh):
@@ -200,6 +200,19 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           self.updateCorrBuffer()
           self.Refresh()
           print(f"Correspondences: {self.corresIdx} with shape: {self.corresIdx.shape}")
+     
+     def computeProcrustes(self, event):
+        if not self.corresBuffer:
+            wx.MessageBox('Must compute correspondences before doing procrustes!', 'Error', wx.OK | wx.ICON_ERROR)
+            return
+        
+        print("Computing Procrustes...")
+        X = self.sourceMesh.VPos.T
+        Y = self.targetMesh.VPos.T
+        (self.currCx, self.currCy, self.currRx) = getProcrustesAlignment(X, Y, self.corresIdx)
+        self.updateCorrBuffer()
+        self.Refresh()
+        print(f"Cx: {self.currCx} - Cy: {self.currCy} - Rx: {self.currRx}")
      
      def updateCorrBuffer(self):
           # Translate vertex buffers to the center
