@@ -31,7 +31,7 @@ def loadOffFile(filename):
         elif currVertex < nVertices:
             values = [float(value) for value in values]
             VPos[currVertex, :] = [values[0], values[1], values[2]]
-            VColors[currVertex, :] = np.array([1.0, 0.2, 0.2]) # Red by default
+            VColors[currVertex, :] = np.array([0.9, 0.9, 0.9]) # Grey by default
             currVertex += 1
         elif currFace < nFaces:
             values = [int(value) for value in values]

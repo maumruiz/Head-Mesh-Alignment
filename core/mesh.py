@@ -95,8 +95,8 @@ class Mesh():
         if self.FNormalLinesVBO:
             self.FNormalLinesVBO.delete()
 
-        self.VPosVBO = vbo.VBO(self.VPos)
-        self.VPosVBO = vbo.VBO(self.VColors)
+        self.VPosVBO = vbo.VBO(np.array(self.VPos, dtype=np.float32))
+        self.VColorsVBO = vbo.VBO(np.array(self.VColors, dtype=np.float32))
         self.IndexVBO = vbo.VBO(self.ITris, target=GL_ELEMENT_ARRAY_BUFFER)
 
         #Use triangle faces to add edges (will be redundancy but is faster
@@ -110,7 +110,7 @@ class Mesh():
         self.EdgeLinesVBO = vbo.VBO(np.array(self.EdgeLines, dtype=np.float32))
         
         #Update face and vertex normals
-        scale = 0.01 * self.getBBox().getDiagLength()
+        scale = 1 * self.getBBox().getDiagLength()
         self.updateNormalBuffer()
         self.VNormalsVBO = vbo.VBO(np.array(self.VNormals, dtype=np.float32))
 

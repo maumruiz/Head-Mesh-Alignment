@@ -6,9 +6,9 @@ class Layout():
     def __init__(self, parent, glCanvas):
         self.parent = parent
         toolBar = BoxSizer(wx.HORIZONTAL)
-        self.viewMesh1Button = wx.Button(parent, -1, "Center Mesh 1")
+        self.viewMesh1Button = wx.Button(parent, -1, "Center Source")
         toolBar.Add(self.viewMesh1Button, 0, wx.EXPAND)
-        self.viewMesh2Button = wx.Button(parent, -1, "Center Mesh 2")
+        self.viewMesh2Button = wx.Button(parent, -1, "Center Target")
         toolBar.Add(self.viewMesh2Button, 0, wx.EXPAND)
 
         self.mainSizer = BoxSizer(wx.VERTICAL)

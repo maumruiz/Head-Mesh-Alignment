@@ -1,18 +1,54 @@
+import numpy as np
+import math
+
 from OpenGL.GL import *
+from OpenGL.GLU import *
 from wx import glcanvas, PaintDC
 from wx import EVT_ERASE_BACKGROUND, EVT_PAINT
+import wx
+
+from core.camera import MousePolarCamera
+from core.data_structures import BBox3D
+
+M_PI = 3.1415925
 
 class OpenGLCanvas(glcanvas.GLCanvas):
-     def __init__(self, parent):
+     def __init__(self, parent, sourceMesh, targetMesh):
+          self.sourceMesh = sourceMesh
+          self.targetMesh = targetMesh
           attribs = (glcanvas.WX_GL_RGBA, glcanvas.WX_GL_DOUBLEBUFFER, glcanvas.WX_GL_DEPTH_SIZE, 24)
           super().__init__(parent, -1, attribList = attribs)
           self.context = glcanvas.GLContext(self)
+          self.size = self.GetClientSize()
+          self.camera = MousePolarCamera(self.size.width, self.size.height)
+          self.MousePos = [0, 0]
+
+          self.nearDist = 0.01
+          self.farDist = 1000.0
+
+          #######################
+          # REVISAR
+          #######################
+          self.currSc = np.array([[0, 0, 0]]).T #Current Source Centroid
+          self.currTc = np.array([[0, 0, 0]]).T #Current Target Centroid
+          self.currRx = np.eye(3) #Current rotation
+          #########################
 
           self.GLinitialized = False
-          #GL-related events
+          #GL events
           self.Bind(EVT_ERASE_BACKGROUND, self.OnEraseBackground)
           # EVT_SIZE(self, self.processSizeEvent)
           self.Bind(EVT_PAINT, self.OnPaint)
+
+          # Mouse events
+          #Mouse Events
+          self.Bind(wx.EVT_LEFT_DOWN, self.MouseDown)
+          self.Bind(wx.EVT_LEFT_UP, self.MouseUp)
+          self.Bind(wx.EVT_RIGHT_DOWN, self.MouseDown)
+          self.Bind(wx.EVT_RIGHT_UP, self.MouseUp)
+          self.Bind(wx.EVT_MIDDLE_DOWN, self.MouseDown)
+          self.Bind(wx.EVT_MIDDLE_UP, self.MouseUp)
+          self.Bind(wx.EVT_MOTION, self.MouseMotion)
 
      def OnEraseBackground(self, event):
           pass # Do nothing, to avoid flashing on MSW.
@@ -26,11 +62,106 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           self.OnDraw()
 
      def OnDraw(self):
+          self.setupPerspectiveMatrix(self.nearDist, self.farDist)
           # Set clear color
           glClearColor(0.15, 0.15, 0.15, 1.0)
           #Clear the screen to black
           glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+          glEnable(GL_LIGHTING)
+          glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, [0.8, 0.8, 0.8, 1.0])
+          glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [0.2, 0.2, 0.2, 1.0])
+          glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, 64)
+
+          self.camera.gotoCameraFrame()
+          P = np.zeros(4)
+          P[0:3] = self.camera.eye   
+          glLightfv(GL_LIGHT0, GL_POSITION, P)
+
+          # Render mesh 1
+          TYC = np.eye(4)
+          TYC[0:3, 3] = -self.currTc.flatten()
+          glPushMatrix()
+          glMultMatrixd((TYC.T).flatten())
+          self.renderMesh(self.sourceMesh, "red")
+          self.renderMesh(self.targetMesh, "blue")
+          glPopMatrix()
+                
           self.SwapBuffers()
+
+     def getBBoxs(self):
+          #Make Source bounding box
+          Vsource = self.sourceMesh.VPos.T - self.currSc
+          sourceBbox = BBox3D(Vsource.T)
+          
+          #Make target bounding box
+          Vtarget = self.targetMesh.VPos.T - self.currTc
+          Vtarget = self.currRx.dot(Vtarget)
+          targetBbox = BBox3D(Vtarget.T)
+          
+          bboxall = BBox3D(np.concatenate((Vsource, Vtarget), 1).T)
+          self.farDist = bboxall.getDiagLength()*20
+          self.nearDist = self.farDist/10000.0
+          return (sourceBbox, targetBbox)
+
+     def viewSourceMesh(self, event):
+          (bbox, _) = self.getBBoxs()
+          self.camera.centerOnBBox(bbox)
+          self.Refresh()
+     
+     def viewTargetMesh(self, event):
+          (_, bbox) = self.getBBoxs()
+          self.camera.centerOnBBox(bbox)
+          self.Refresh()
+
+     def renderMesh(self, mesh, color):
+          if mesh.needsDisplayUpdate:
+               mesh.performDisplayUpdate()
+               mesh.needsDisplayUpdate = False
+          
+          glEnable(GL_LIGHTING)
+          self.drawFaces(mesh)
+          if color == "red":
+               glColor3f(1.0, 0, 0)
+          else:
+               glColor3f(0, 0, 1.0)
+          self.drawPoints(mesh)
+     
+     def drawPoints(self, mesh):
+          glEnableClientState(GL_VERTEX_ARRAY)
+          mesh.VPosVBO.bind()
+          glVertexPointerf(mesh.VPosVBO)
+          glDisable(GL_LIGHTING)
+          glPointSize(3)
+          glDrawArrays(GL_POINTS, 0, mesh.VPos.shape[0])
+          mesh.VPosVBO.unbind()
+          glDisableClientState(GL_VERTEX_ARRAY)
+     
+     def drawFaces(self, mesh):
+          glEnableClientState(GL_VERTEX_ARRAY)
+          glEnableClientState(GL_COLOR_ARRAY)
+          glEnableClientState(GL_NORMAL_ARRAY)
+          mesh.VPosVBO.bind()
+          glVertexPointerf(mesh.VPosVBO)
+          mesh.VNormalsVBO.bind()
+          glNormalPointerf(mesh.VNormalsVBO)
+          mesh.VColorsVBO.bind()
+          glColorPointerf(mesh.VColorsVBO)
+          
+          # Dont use texture
+          glEnable(GL_COLOR_MATERIAL)
+          glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+
+          mesh.IndexVBO.bind()
+          glDrawElements(GL_TRIANGLES, 3*mesh.ITris.shape[0], GL_UNSIGNED_INT, None)
+          mesh.IndexVBO.unbind()
+
+          mesh.VPosVBO.unbind()
+          mesh.VNormalsVBO.unbind()
+          mesh.VColorsVBO.unbind()
+          glDisableClientState(GL_NORMAL_ARRAY)
+          glDisableClientState(GL_COLOR_ARRAY)
+          glDisableClientState(GL_VERTEX_ARRAY)
      
      def initGL(self):        
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.2, 0.2, 0.2, 1.0])
@@ -42,3 +173,48 @@ class OpenGLCanvas(glcanvas.GLCanvas):
         glEnable(GL_NORMALIZE)
         glEnable(GL_LIGHTING)
         glEnable(GL_DEPTH_TEST)
+     
+     def setupPerspectiveMatrix(self, nearDist = -1, farDist = -1):
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        if nearDist == -1:
+            farDist = self.camera.eye - self.bbox.getCenter()
+            farDist = np.sqrt(farDist.dot(farDist)) + self.bbox.getDiagLength()
+            nearDist = farDist/50.0
+        gluPerspective(180.0*self.camera.yfov/M_PI, float(self.size.x)/self.size.y, nearDist, farDist)
+
+     def handleMouseStuff(self, x, y):
+        #Invert y from what the window manager says
+        y = self.size.height - y
+        self.MousePos = [x, y]
+
+     def MouseDown(self, evt):
+          state = wx.GetMouseState()
+          x, y = evt.GetPosition()
+          self.CaptureMouse()
+          self.handleMouseStuff(x, y)
+          self.Refresh()
+     
+     def MouseUp(self, evt):
+          x, y = evt.GetPosition()
+          self.handleMouseStuff(x, y)
+          self.ReleaseMouse()
+          self.Refresh()
+
+     def MouseMotion(self, evt):
+          state = wx.GetMouseState()
+          x, y = evt.GetPosition()
+          [lastX, lastY] = self.MousePos
+          self.handleMouseStuff(x, y)
+          dX = self.MousePos[0] - lastX
+          dY = self.MousePos[1] - lastY
+          if evt.Dragging():
+               #Translate/rotate shape
+               if evt.MiddleIsDown():
+                    self.camera.translate(dX, dY)
+               elif evt.RightIsDown():
+                    self.camera.zoom(-dY)#Want to zoom in as the mouse goes up
+               elif evt.LeftIsDown():
+                    self.camera.orbitLeftRight(dX)
+                    self.camera.orbitUpDown(dY)
+          self.Refresh() 
