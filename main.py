@@ -25,6 +25,7 @@ class AlignmentApp(Frame):
           layout.bindViewMesh1Button(self.glCanvas.viewSourceMesh)
           layout.bindViewMesh2Button(self.glCanvas.viewTargetMesh)
           layout.bindAlignCentroidsButton(self.glCanvas.centerMeshes)
+          layout.bindFindCorrespondencesButton(self.glCanvas.findCorrespondences)
 
           self.glCanvas.viewSourceMesh(None)
           

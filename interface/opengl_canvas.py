@@ -3,15 +3,14 @@ import math
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from OpenGL.arrays import vbo
 from wx import glcanvas, PaintDC
 from wx import EVT_ERASE_BACKGROUND, EVT_PAINT
 import wx
 
 from core.camera import MousePolarCamera
 from core.data_structures import BBox3D
-from core.icp import getCentroid
-
-M_PI = 3.1415925
+from core.icp import getCentroid, getCorrespondences
 
 class OpenGLCanvas(glcanvas.GLCanvas):
      def __init__(self, parent, sourceMesh, targetMesh):
@@ -28,11 +27,13 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           self.farDist = 1000.0
 
           #######################
-          # REVISAR
+          # CALCULATED
           #######################
           self.currSc = np.array([[0, 0, 0]]).T #Current Source Centroid
           self.currTc = np.array([[0, 0, 0]]).T #Current Target Centroid
           self.currRx = np.eye(3) #Current rotation
+          self.corresIdx = np.zeros([]) #Current correspondences indexes
+          self.corresBuffer = None #Correspondence vertex buffer
           #########################
 
           self.GLinitialized = False
@@ -84,6 +85,9 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           # Render meshes
           self.renderMesh(self.sourceMesh, self.currSc, "red")
           self.renderMesh(self.targetMesh, self.currTc, "blue")
+
+          if self.corresBuffer:
+               self.drawLines(self.corresBuffer, self.sourceMesh.VPos.shape[0])
 
           self.SwapBuffers()
 
@@ -167,10 +171,50 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           glDisableClientState(GL_COLOR_ARRAY)
           glDisableClientState(GL_VERTEX_ARRAY)
      
+     def drawLines(self, buff, nLines):
+          glColor3f(0, 1.0, 0)
+          glEnableClientState(GL_VERTEX_ARRAY)
+          buff.bind()
+          glVertexPointerf(buff)
+          glDisable(GL_LIGHTING)
+          glPointSize(7)
+          glDrawArrays(GL_LINES, 0, nLines*2)
+          buff.unbind()
+          glDisableClientState(GL_VERTEX_ARRAY)
+     
      def centerMeshes(self, event):
           self.currSc = getCentroid(self.sourceMesh.VPos.T)
           self.currTc = getCentroid(self.targetMesh.VPos.T)
+
+          if self.corresBuffer:
+               self.updateCorrBuffer()
+
           self.viewSourceMesh(None)
+          print(f"Centroids: {self.currSc} and {self.currTc}")
+     
+     def findCorrespondences(self, event):
+          print('Calculating correspondences...')
+          X = self.sourceMesh.VPos.T
+          Y = self.targetMesh.VPos.T
+          self.corresIdx = getCorrespondences(X, Y, self.currSc, self.currTc, self.currRx)
+          self.updateCorrBuffer()
+          self.Refresh()
+          print(f"Correspondences: {self.corresIdx} with shape: {self.corresIdx.shape}")
+     
+     def updateCorrBuffer(self):
+          # Translate vertex buffers to the center
+          X = self.sourceMesh.VPos.T - self.currSc
+          Y = self.targetMesh.VPos.T - self.currTc
+          # Apply rotation to the source mesh
+          X = self.currRx.dot(X)
+          # Create the correspondence buffer
+          N = self.corresIdx.size
+          C = np.zeros((N*2, 3))
+          # Fill the correspondence buffer
+          C[0::2, :] = X.T
+          C[1::2, :] = Y.T[self.corresIdx, :]
+          # Create VBO with the data
+          self.corresBuffer = vbo.VBO(np.array(C, dtype=np.float32))
      
      def initGL(self):        
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.2, 0.2, 0.2, 1.0])
@@ -190,7 +234,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
             farDist = self.camera.eye - self.bbox.getCenter()
             farDist = np.sqrt(farDist.dot(farDist)) + self.bbox.getDiagLength()
             nearDist = farDist/50.0
-        gluPerspective(180.0*self.camera.yfov/M_PI, float(self.size.x)/self.size.y, nearDist, farDist)
+        gluPerspective(180.0*self.camera.yfov/math.pi, float(self.size.x)/self.size.y, nearDist, farDist)
 
      def handleMouseStuff(self, x, y):
         #Invert y from what the window manager says
