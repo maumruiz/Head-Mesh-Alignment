@@ -9,6 +9,7 @@ import wx
 
 from core.camera import MousePolarCamera
 from core.data_structures import BBox3D
+from core.icp import getCentroid
 
 M_PI = 3.1415925
 
@@ -67,26 +68,23 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           glClearColor(0.15, 0.15, 0.15, 1.0)
           #Clear the screen to black
           glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
+          
+          # Add lightning
           glEnable(GL_LIGHTING)
           glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, [0.8, 0.8, 0.8, 1.0])
           glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, [0.2, 0.2, 0.2, 1.0])
           glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, 64)
 
+          # Position camera
           self.camera.gotoCameraFrame()
           P = np.zeros(4)
           P[0:3] = self.camera.eye   
           glLightfv(GL_LIGHT0, GL_POSITION, P)
 
-          # Render mesh 1
-          TYC = np.eye(4)
-          TYC[0:3, 3] = -self.currTc.flatten()
-          glPushMatrix()
-          glMultMatrixd((TYC.T).flatten())
-          self.renderMesh(self.sourceMesh, "red")
-          self.renderMesh(self.targetMesh, "blue")
-          glPopMatrix()
-                
+          # Render meshes
+          self.renderMesh(self.sourceMesh, self.currSc, "red")
+          self.renderMesh(self.targetMesh, self.currTc, "blue")
+
           self.SwapBuffers()
 
      def getBBoxs(self):
@@ -114,7 +112,12 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           self.camera.centerOnBBox(bbox)
           self.Refresh()
 
-     def renderMesh(self, mesh, color):
+     def renderMesh(self, mesh, centroid, color):
+          TC = np.eye(4)
+          TC[0:3, 3] = -centroid.flatten()
+          glPushMatrix()
+          glMultMatrixd((TC.T).flatten())
+
           if mesh.needsDisplayUpdate:
                mesh.performDisplayUpdate()
                mesh.needsDisplayUpdate = False
@@ -126,6 +129,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           else:
                glColor3f(0, 0, 1.0)
           self.drawPoints(mesh)
+          glPopMatrix()
      
      def drawPoints(self, mesh):
           glEnableClientState(GL_VERTEX_ARRAY)
@@ -162,6 +166,11 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           glDisableClientState(GL_NORMAL_ARRAY)
           glDisableClientState(GL_COLOR_ARRAY)
           glDisableClientState(GL_VERTEX_ARRAY)
+     
+     def centerMeshes(self, event):
+          self.currSc = getCentroid(self.sourceMesh.VPos.T)
+          self.currTc = getCentroid(self.targetMesh.VPos.T)
+          self.viewSourceMesh(None)
      
      def initGL(self):        
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, [0.2, 0.2, 0.2, 1.0])

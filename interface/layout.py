@@ -11,6 +11,9 @@ class Layout():
         self.viewMesh2Button = wx.Button(parent, -1, "Center Target")
         toolBar.Add(self.viewMesh2Button, 0, wx.EXPAND)
 
+        self.alignCentroidsButton = wx.Button(parent, -1, "Align Centroids")
+        toolBar.Add(self.alignCentroidsButton, 0, wx.EXPAND)
+
         self.mainSizer = BoxSizer(wx.VERTICAL)
         self.mainSizer.Add(glCanvas, 2, wx.EXPAND)
         self.mainSizer.Add(toolBar, 0, wx.EXPAND)
@@ -20,3 +23,6 @@ class Layout():
     
     def bindViewMesh2Button(self, func):
         self.parent.Bind(wx.EVT_BUTTON, func, self.viewMesh2Button)
+    
+    def bindAlignCentroidsButton(self, func):
+        self.parent.Bind(wx.EVT_BUTTON, func, self.alignCentroidsButton)
