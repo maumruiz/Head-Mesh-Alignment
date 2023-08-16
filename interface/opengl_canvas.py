@@ -10,7 +10,7 @@ import wx
 
 from core.camera import MousePolarCamera
 from core.data_structures import BBox3D
-from core.icp import getCentroid, getCorrespondences, getProcrustesAlignment
+from core.icp import getCentroid, getCorrespondences, getProcrustesAlignment, execICP
 
 class OpenGLCanvas(glcanvas.GLCanvas):
      def __init__(self, parent, sourceMesh, targetMesh):
@@ -34,6 +34,9 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           self.currRx = np.eye(3) #Current rotation
           self.corresIdx = np.zeros([]) #Current correspondences indexes
           self.corresBuffer = None #Correspondence vertex buffer
+          self.ScUpdates = []
+          self.TcUpdates = []
+          self.RxUpdates = []
           #########################
 
           self.GLinitialized = False
@@ -213,6 +216,18 @@ class OpenGLCanvas(glcanvas.GLCanvas):
         self.updateCorrBuffer()
         self.Refresh()
         print(f"Cx: {self.currCx} - Cy: {self.currCy} - Rx: {self.currRx}")
+
+     def computeICP(self, event):
+          print("Computing ICP...")
+          X = self.sourceMesh.VPos.T
+          Y = self.targetMesh.VPos.T
+          (self.ScUpdates, self.TcUpdates, self.RxUpdates) = execICP(X, Y)
+          self.currSc = self.ScUpdates[-1]
+          self.currTc = self.TcUpdates[-1]
+          self.currRx = self.RxUpdates[-1]
+          self.corridxbuff = None
+          self.viewSourceMesh(None)
+          self.Refresh()
      
      def updateCorrBuffer(self):
           # Translate vertex buffers to the center

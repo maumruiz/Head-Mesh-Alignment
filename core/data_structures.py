@@ -1,6 +1,4 @@
 import numpy as np
-from OpenGL.arrays import vbo
-from OpenGL.GL import *
 
 class BBox3D(object):
     def __init__(self, points=None):

@@ -1,6 +1,8 @@
 # WE WANT TO ALIGN SOURCE TO TARGET MESH
 import numpy as np
 
+MAX_ITERS = 200
+
 # Compute the centroid of a point cloud
 # points is a 3xN matrix
 # Outputs a 3x1 vector representing the centroid
@@ -45,3 +47,28 @@ def getProcrustesAlignment(X, Y, idx):
     # transpose of the right singular vectors 'R'
     R = np.dot(U, Vt)
     return (Cx, Cy, R)
+
+# Iteratively find corresponcences and compute procrustres alignment until convergence
+def execICP(X, Y):
+    CxUpdates = []
+    CyUpdates = []
+    RxUpdates = []
+    Cx = getCentroid(X)
+    Cy = getCentroid(Y)
+    Rx = np.eye(3, 3)
+    lastC = Cy
+    counter = 1
+    for i in range(MAX_ITERS):
+        if(counter % 5 == 0):
+            print(f'Computing iteration {counter}...')
+        idx = getCorrespondences(X, Y, Cx, Cy, Rx)
+        (Cx, Cy, Rx) = getProcrustesAlignment(X, Y, idx)
+        CxUpdates.append(Cx)
+        CyUpdates.append(Cy)
+        RxUpdates.append(Rx)
+        d = Cy - lastC
+        if np.sum(d*d) < 0.000000001:
+            break;
+        lastC = Cy
+    print(f"ICP converged after {len(CxUpdates)} iterations with an error of {np.sum(d*d)}")
+    return (CxUpdates, CyUpdates, RxUpdates)

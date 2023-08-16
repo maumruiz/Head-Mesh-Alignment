@@ -17,6 +17,8 @@ class Layout():
         toolBar.Add(self.findCorrespondencesButton, 0, wx.EXPAND)
         self.computeProcrustesButton = wx.Button(parent, -1, "Compute Procrustes")
         toolBar.Add(self.computeProcrustesButton, 0, wx.EXPAND)
+        self.icpButton = wx.Button(parent, -1, "ICP")
+        toolBar.Add(self.icpButton, 0, wx.EXPAND)
 
         self.mainSizer = BoxSizer(wx.VERTICAL)
         self.mainSizer.Add(glCanvas, 2, wx.EXPAND)
@@ -36,3 +38,6 @@ class Layout():
 
     def bindComputeProcrustesButton(self, func):
         self.parent.Bind(wx.EVT_BUTTON, func, self.computeProcrustesButton)
+    
+    def bindIcpButton(self, func):
+        self.parent.Bind(wx.EVT_BUTTON, func, self.icpButton)
