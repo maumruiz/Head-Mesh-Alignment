@@ -164,7 +164,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
           glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
 
           mesh.IndexVBO.bind()
-          glDrawElements(GL_TRIANGLES, 3*mesh.ITris.shape[0], GL_UNSIGNED_INT, None)
+          glDrawElements(GL_QUADS, 4*mesh.ITris.shape[0], GL_UNSIGNED_INT, None)
           mesh.IndexVBO.unbind()
 
           mesh.VPosVBO.unbind()
@@ -219,12 +219,7 @@ class OpenGLCanvas(glcanvas.GLCanvas):
 
      def computeICP(self, event):
           print("Computing ICP...")
-          X = self.sourceMesh.VPos.T
-          Y = self.targetMesh.VPos.T
-          (self.ScUpdates, self.TcUpdates, self.RxUpdates) = execICP(X, Y)
-          self.currSc = self.ScUpdates[-1]
-          self.currTc = self.TcUpdates[-1]
-          self.currRx = self.RxUpdates[-1]
+          (self.currRx, self.currSc) = execICP(self.sourceMesh.VPos, self.targetMesh.VPos)
           self.corridxbuff = None
           self.viewSourceMesh(None)
           self.Refresh()

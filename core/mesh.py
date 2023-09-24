@@ -64,11 +64,11 @@ class Mesh():
 
         # Calculate vertex normals by summing up the normalized face normals of the adjacent
         # faces that share a vertex.
-        for k in range(3):
+        for k in range(4):
             self.VNormals[self.ITris[:, k], :] += FAreas*FNormals
             VAreas[self.ITris[:, k]] += FAreas # Accumulate the areas of the adjacent faces
             self.FCentroid += self.VPos[self.ITris[:, k], :] # Calculate centroid of each face
-        self.FCentroid /= 3
+        self.FCentroid /= 4
 
         # Normalize vertex normals by dividing each vector by its corresponding accumulated
         # vertex area
@@ -102,11 +102,11 @@ class Mesh():
         #Use triangle faces to add edges (will be redundancy but is faster
             #tradeoff for rendering only)
         NTris = self.ITris.shape[0]
-        self.EdgeLines = np.zeros((NTris*3*2, 3))
-        for k in range(3):
+        self.EdgeLines = np.zeros((NTris*4*2, 3))
+        for k in range(4):
             istart = k*NTris*2
             self.EdgeLines[istart:istart+NTris*2:2, :] = self.VPos[self.ITris[:, k], :]
-            self.EdgeLines[istart+1:istart+NTris*2:2, :] = self.VPos[self.ITris[:, (k+1)%3], :]
+            self.EdgeLines[istart+1:istart+NTris*2:2, :] = self.VPos[self.ITris[:, (k+1)%4], :]
         self.EdgeLinesVBO = vbo.VBO(np.array(self.EdgeLines, dtype=np.float32))
         
         #Update face and vertex normals

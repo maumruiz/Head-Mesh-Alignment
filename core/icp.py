@@ -1,5 +1,6 @@
 # WE WANT TO ALIGN SOURCE TO TARGET MESH
 import numpy as np
+from simpleicp import PointCloud, SimpleICP
 
 MAX_ITERS = 200
 
@@ -72,3 +73,14 @@ def execICP(X, Y):
         lastC = Cy
     print(f"ICP converged after {len(CxUpdates)} iterations with an error of {np.sum(d*d)}")
     return (CxUpdates, CyUpdates, RxUpdates)
+
+def execICP(X, Y):
+    pc_fix = PointCloud(X, columns=["x", "y", "z"])
+    pc_mov = PointCloud(Y, columns=["x", "y", "z"])
+
+    icp = SimpleICP()
+    icp.add_point_clouds(pc_fix, pc_mov)
+    H, X_mov_transformed, rigid_body_transformation_params, distance_residuals = icp.run(max_overlap_distance=1)
+    Rx = H[0:3, 0:3]
+    tx =  H[0:3, 3][:, np.newaxis]
+    return Rx, tx

@@ -44,3 +44,32 @@ def loadOffFile(filename):
     ITris = np.array(ITris, np.int32)
 
     return Mesh(VPos, VColors, ITris)
+
+def loadObjFile(filename):
+    vPos = []
+    vColors = []
+    fIdx = []
+    fin = open(filename, 'r')
+    for line in fin:
+        values = line.split() # split by whitespace
+        # Skip the row if line is empty or is a comment
+        if len(values) == 0 or values[0][0] in ['#', '\0', ' ']:
+            continue
+        
+        if values[0] == 'v':
+            vertices = [float(x) for x in values[1:]]
+            vPos.append(vertices)
+            vColors.append([0.9, 0.9, 0.9])
+        
+        if values[0] == 'f':
+            faceIndices = [int(x.split('/')[0])-1 for x in values[1:]]
+            fIdx.append(faceIndices)
+    
+    fin.close()
+    vPos = np.array(vPos, np.float64)
+    vColors = np.array(vColors, np.float64)
+    fIdx = np.array(fIdx, np.int32)
+
+    print(f"Number of Vertices: {vPos.shape[0]} -- Number of Faces: {fIdx.shape[0]}")
+
+    return Mesh(vPos, vColors, fIdx)

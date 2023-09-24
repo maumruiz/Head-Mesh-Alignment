@@ -2,7 +2,7 @@ from wx import App, Frame, Size, ID_ANY
 
 from interface.layout import Layout
 from interface.opengl_canvas import OpenGLCanvas
-from core.loader import loadOffFile
+from core.loader import loadOffFile, loadObjFile
 
 import numpy as np
 
@@ -13,10 +13,10 @@ class AlignmentApp(Frame):
           super().__init__(None, ID_ANY, "Head Mesh Alignment", size=DEFAULT_SIZE)
           self.Centre()
           
-          sourceMesh = loadOffFile('meshes/source.off')
+          sourceMesh = loadObjFile('meshes/sourceHead.obj')
           sourceMesh.performDisplayUpdate()
           
-          targetMesh = loadOffFile('meshes/target.off')
+          targetMesh = loadObjFile('meshes/targetHead.obj')
           targetMesh.performDisplayUpdate()
           
           self.glCanvas = OpenGLCanvas(self, sourceMesh, targetMesh)
