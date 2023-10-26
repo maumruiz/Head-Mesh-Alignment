@@ -154,3 +154,7 @@ cython_debug/
 reference
 .vscode
 meshes
+
+tmp/*
+input/*
+output/*

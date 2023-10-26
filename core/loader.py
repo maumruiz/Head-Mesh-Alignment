@@ -1,49 +1,4 @@
 import numpy as np
-from core.mesh import Mesh
-
-# Load files with .off extension
-def loadOffFile(filename):
-    fin = open(filename, 'r')
-    nVertices = 0
-    nFaces = 0
-    currVertex = 0
-    currFace = 0
-
-    VPos = np.zeros((0, 3)) # Vertex buffer
-    VColors = np.zeros((0, 3)) # Color buffer
-    ITris = np.zeros((0, 3)) # Triangle index buffer
-
-    for line in fin:
-        values = line.split() # split by whitespace
-        # Skip the row if line is empty or is a comment
-        if len(values) == 0 or values[0][0] in ['#', '\0', ' '] or len(values[0]) == 0:
-            continue
-        
-        if nVertices == 0:
-            if values[0] == "OFF":
-                continue
-            else:
-                nVertices, nFaces, nEdges = [int(value) for value in values]
-                print(f"Number of Vertices: {nVertices} -- Number of Faces: {nFaces}")
-                VPos = np.zeros((nVertices, 3))
-                VColors = np.zeros((nVertices, 3))
-                ITris = np.zeros((nFaces, 3))
-        elif currVertex < nVertices:
-            values = [float(value) for value in values]
-            VPos[currVertex, :] = [values[0], values[1], values[2]]
-            VColors[currVertex, :] = np.array([0.9, 0.9, 0.9]) # Grey by default
-            currVertex += 1
-        elif currFace < nFaces:
-            values = [int(value) for value in values]
-            ITris[currFace, :] = values[1: values[0]+1]
-            currFace += 1
-
-    fin.close()
-    VPos = np.array(VPos, np.float64)
-    VColors = np.array(VColors, np.float64)
-    ITris = np.array(ITris, np.int32)
-
-    return Mesh(VPos, VColors, ITris)
 
 def loadObjFile(filename):
     vPos = []
@@ -55,21 +10,57 @@ def loadObjFile(filename):
         # Skip the row if line is empty or is a comment
         if len(values) == 0 or values[0][0] in ['#', '\0', ' ']:
             continue
-        
+
         if values[0] == 'v':
             vertices = [float(x) for x in values[1:]]
             vPos.append(vertices)
             vColors.append([0.9, 0.9, 0.9])
-        
+
         if values[0] == 'f':
-            faceIndices = [int(x.split('/')[0])-1 for x in values[1:]]
+            faceIndices = [int(x.split('/')[0]) for x in values[1:]]
             fIdx.append(faceIndices)
-    
+
     fin.close()
-    vPos = np.array(vPos, np.float64)
-    vColors = np.array(vColors, np.float64)
-    fIdx = np.array(fIdx, np.int32)
+    vPos = np.array(vPos)
+    vColors = np.array(vColors)
+    fIdx = np.array(fIdx)
 
-    print(f"Number of Vertices: {vPos.shape[0]} -- Number of Faces: {fIdx.shape[0]}")
+    return vPos, fIdx
 
-    return Mesh(vPos, vColors, fIdx)
+def loadXyzFile(filename):
+    vPos = []
+    fin = open(filename, 'r')
+    for line in fin:
+        values = line.split() # split by whitespace
+        # Skip the row if line is empty or is a comment
+        if len(values) == 0 or values[0][0] in ['#', '\0', ' ']:
+            continue
+
+        vertices = [float(x) for x in values[0:]]
+        vPos.append(vertices)
+
+    fin.close()
+    vPos = np.array(vPos)
+    return vPos
+
+def saveXyzFile(filename, vertices):
+    ofile = open(f"{filename}.xyz", 'w')
+
+    for item in vertices:
+        ofile.write(f"{item[0]} {item[1]} {item[2]}\n")
+
+    ofile.close()
+
+def saveObjFile(filename, vertices, faces):
+    ofile = open(f"{filename}.obj", 'w')
+
+    for item in vertices:
+        ofile.write(f"v {item[0]} {item[1]} {item[2]}\n")
+
+    for face in faces:
+        ofile.write(f"f")
+        for vert in face:
+            ofile.write(f" {vert}")
+        ofile.write(f"\n")
+
+    ofile.close()
