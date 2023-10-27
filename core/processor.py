@@ -1,28 +1,48 @@
+from datetime import datetime
 import open3d as o3d
 import numpy as np
-from core.loader import loadObjFile, saveXyzFile
+from core.loader import loadObjFile, saveXyzFile, updateObjVertices
+from core.utils import calculateMaxEucDist, getCentroid
 
-TARGET_SAMPLE_NUM = 12000
+class Processor:
+    def __init__(self, target_filename, base_filename):
+        self.target_filename = target_filename
+        self.base_filename = base_filename
+        self.timestamp = datetime.now().strftime(r'%y%m%d_%H%M%S')
+        print(self.timestamp)
 
-def downsampleMesh(name):
-    print('Downsampling Scan... ')
-    vertices, faces = loadObjFile(f'input/{name}.obj')
-    
-    sample_by = 2
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(vertices)
-    downsampled = np.asarray(pcd.uniform_down_sample(sample_by).points)
-    
-    while downsampled.shape[0] > TARGET_SAMPLE_NUM:
-        sample_by += 1
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(vertices)
-        downsampled = np.asarray(pcd.uniform_down_sample(sample_by).points)
+    def align(self):
+        prealignedFilename = self.preAlignMesh()
+        landmarksFilename = self.detectLandmarks(prealignedFilename)
 
-    print(f'Sampled by: {sample_by}')
-    print(f'Shape: {downsampled.shape}')
+    def preAlignMesh(self):
+        print('Prealigning mesh...')
+        in_filename = f'input/{self.target_filename}'
+        out_filename = f'tmp/{self.timestamp}/{self.target_filename}_prealigned'
 
-    saveXyzFile(f'tmp/{name}_downsampled', downsampled)
+        t_vertices, _ = loadObjFile(in_filename)
+        targetCentroid = getCentroid(t_vertices)
+        target_vertices = t_vertices - targetCentroid.T
+        base_vertices, _ = loadObjFile(f'input/{self.base_filename}')
 
-def scaleICP():
-    pass
+        target_maxDist = calculateMaxEucDist(target_vertices)
+        base_maxDist = calculateMaxEucDist(base_vertices)
+
+        euc_ratio = base_maxDist / target_maxDist
+        scaled_vertices = target_vertices * euc_ratio
+
+        print(f'Scale ratio: {euc_ratio}')
+
+        updateObjVertices(in_filename, out_filename, scaled_vertices)
+        return out_filename
+
+    def detectLandmarks(self, filename):
+        print('Detecting landmarks...')
+        out_filename = f'tmp/{self.timestamp}/{self.target_filename}_landmarks'
+
+        
+
+        return out_filename
+
+    def scaleICP(self):
+        pass

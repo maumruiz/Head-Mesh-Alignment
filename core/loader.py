@@ -1,10 +1,11 @@
 import numpy as np
+import os
 
 def loadObjFile(filename):
     vPos = []
     vColors = []
     fIdx = []
-    fin = open(filename, 'r')
+    fin = open(f'{filename}.obj', 'r')
     for line in fin:
         values = line.split() # split by whitespace
         # Skip the row if line is empty or is a comment
@@ -63,4 +64,41 @@ def saveObjFile(filename, vertices, faces):
             ofile.write(f" {vert}")
         ofile.write(f"\n")
 
+    ofile.close()
+
+def updateObjVertices(in_filename, out_filename, vertices):
+    fin = open(f'{in_filename}.obj', 'r')
+    
+    lines1 = []
+    lines2 = []
+    foundVertices = False
+
+    for line in fin:
+        values = line.split()
+
+        if len(values) == 0 or values[0][0] in ['#', '\0', ' ']:
+            if foundVertices:
+                lines2.append(line)
+            else:
+                lines1.append(line)
+        elif values[0] == 'v':
+            foundVertices = True
+        else:
+            if foundVertices:
+                lines2.append(line)
+            else:
+                lines1.append(line)
+    
+    fin.close()
+
+    vertices_lines = []
+    for item in vertices:
+        vertices_lines.append(f"v {item[0]} {item[1]} {item[2]}\n")
+    
+    final_lines = lines1 + vertices_lines + lines2
+
+    os.makedirs(os.path.dirname(out_filename), exist_ok=True)
+    ofile = open(f"{out_filename}.obj", 'w')
+    for line in final_lines:
+        ofile.write(line)
     ofile.close()

@@ -1,5 +1,5 @@
 import sys
-from core.processor import downsampleMesh
+from core.processor import Processor
 
 
 if __name__ == '__main__':
@@ -10,5 +10,6 @@ if __name__ == '__main__':
      targetMesh = f'{sys.argv[1]}'
      baseMesh = f'{sys.argv[2]}'
 
-     downsampleMesh(targetMesh)
+     processor = Processor(targetMesh, baseMesh)
+     processor.align()
      
