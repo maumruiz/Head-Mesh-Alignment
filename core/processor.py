@@ -1,8 +1,13 @@
 from datetime import datetime
 import open3d as o3d
 import numpy as np
+
 from core.loader import loadObjFile, saveXyzFile, updateObjVertices
 from core.utils import calculateMaxEucDist, getCentroid
+from deepmvlm.api import DeepMVLM
+from deepmvlm.parse_config import ConfigParser
+
+CONFIG_FILE = 'geometry+depth.json'
 
 class Processor:
     def __init__(self, target_filename, base_filename):
@@ -12,8 +17,8 @@ class Processor:
         print(self.timestamp)
 
     def align(self):
-        prealignedFilename = self.preAlignMesh()
-        landmarksFilename = self.detectLandmarks(prealignedFilename)
+        # prealignedFilename = self.preAlignMesh()
+        landmarksFilename = self.detectLandmarks(self.target_filename)
 
     def preAlignMesh(self):
         print('Prealigning mesh...')
@@ -39,8 +44,9 @@ class Processor:
     def detectLandmarks(self, filename):
         print('Detecting landmarks...')
         out_filename = f'tmp/{self.timestamp}/{self.target_filename}_landmarks'
-
         
+        config = ConfigParser(f'deepmvlm/configs/{CONFIG_FILE}', self.timestamp)
+        dm = DeepMVLM(config)
 
         return out_filename
 

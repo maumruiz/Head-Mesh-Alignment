@@ -1,0 +1,4 @@
+{
+    "image_channels": "RGB+depth",
+    "n_gpu": 1
+}

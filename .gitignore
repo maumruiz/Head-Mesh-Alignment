@@ -158,3 +158,4 @@ meshes
 tmp/*
 input/*
 output/*
+deepmvlm/models/*
