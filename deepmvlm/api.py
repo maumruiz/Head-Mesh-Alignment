@@ -4,6 +4,7 @@ from torch.utils.model_zoo import load_url
 from deepmvlm.model import MVLMModel
 from deepmvlm.render3d import Render3D
 from deepmvlm.predict2d import Predict2D
+from deepmvlm.utils3d import Utils3D
 
 models_urls = {
     'MVLMModel_DTU3D-RGB':
@@ -71,4 +72,11 @@ class DeepMVLM:
         predict_2d = Predict2D(self.config, self.model, self.device)
         heatmap_maxima = predict_2d.predict_heatmaps_from_images(image_stack)
 
-        print(heatmap_maxima.shape)
+        u3d = Utils3D(self.config)
+        u3d.heatmap_maxima = heatmap_maxima
+        u3d.transformations_3d = transform_stack
+        u3d.compute_lines_from_heatmap_maxima()
+        u3d.compute_all_landmarks_from_view_lines()
+        u3d.project_landmarks_to_surface(file_name)
+
+        return u3d.landmarks

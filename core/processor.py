@@ -14,9 +14,9 @@ class Processor:
         self.timestamp = datetime.now().strftime(r'%y%m%d_%H%M%S')
 
     def align(self):
-        # prealignedFilename = self.preAlignMesh()
-        # landmarksFilename = self.detectLandmarks(self.target_filename)
-        landmarksFilename = self.detectLandmarks(f'input/{self.target_filename}.obj')
+        prealignedFilename = self.preAlignMesh()
+        landmarksFilename = self.detectLandmarks(f'{prealignedFilename}.obj')
+        print(landmarksFilename)
 
     def preAlignMesh(self):
         print('--- Prealigning mesh...')
@@ -46,6 +46,7 @@ class Processor:
         config = ConfigParser(f'deepmvlm/configs/{CONFIG_FILE}', self.timestamp)
         dm = DeepMVLM(config)
         landmarks = dm.predict(in_filename)
+        saveXyzFile(out_filename, landmarks)
 
         return out_filename
 
