@@ -2,6 +2,8 @@ import torch
 from torch.utils.model_zoo import load_url
 
 from deepmvlm.model import MVLMModel
+from deepmvlm.render3d import Render3D
+from deepmvlm.predict2d import Predict2D
 
 models_urls = {
     'MVLMModel_DTU3D-RGB':
@@ -61,3 +63,12 @@ class DeepMVLM:
         device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
         list_ids = list(range(n_gpu_use))
         return device, list_ids
+    
+    def predict(self, file_name):
+        render_3d = Render3D(self.config)
+        image_stack, transform_stack = render_3d.render_3d_file(file_name)
+        
+        predict_2d = Predict2D(self.config, self.model, self.device)
+        heatmap_maxima = predict_2d.predict_heatmaps_from_images(image_stack)
+
+        print(heatmap_maxima.shape)

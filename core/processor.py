@@ -1,6 +1,4 @@
 from datetime import datetime
-import open3d as o3d
-import numpy as np
 
 from core.loader import loadObjFile, saveXyzFile, updateObjVertices
 from core.utils import calculateMaxEucDist, getCentroid
@@ -14,14 +12,14 @@ class Processor:
         self.target_filename = target_filename
         self.base_filename = base_filename
         self.timestamp = datetime.now().strftime(r'%y%m%d_%H%M%S')
-        print(self.timestamp)
 
     def align(self):
         # prealignedFilename = self.preAlignMesh()
-        landmarksFilename = self.detectLandmarks(self.target_filename)
+        # landmarksFilename = self.detectLandmarks(self.target_filename)
+        landmarksFilename = self.detectLandmarks(f'input/{self.target_filename}.obj')
 
     def preAlignMesh(self):
-        print('Prealigning mesh...')
+        print('--- Prealigning mesh...')
         in_filename = f'input/{self.target_filename}'
         out_filename = f'tmp/{self.timestamp}/{self.target_filename}_prealigned'
 
@@ -41,12 +39,13 @@ class Processor:
         updateObjVertices(in_filename, out_filename, scaled_vertices)
         return out_filename
 
-    def detectLandmarks(self, filename):
-        print('Detecting landmarks...')
+    def detectLandmarks(self, in_filename):
+        print('--- Detecting landmarks...')
         out_filename = f'tmp/{self.timestamp}/{self.target_filename}_landmarks'
         
         config = ConfigParser(f'deepmvlm/configs/{CONFIG_FILE}', self.timestamp)
         dm = DeepMVLM(config)
+        landmarks = dm.predict(in_filename)
 
         return out_filename
 

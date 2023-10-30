@@ -23,8 +23,6 @@ class ConfigParser:
         self.save_dir.mkdir(parents=True, exist_ok=True)
         self.temp_dir.mkdir(parents=True, exist_ok=True)
 
-        print(save_dir)
-
     def __getitem__(self, name):
         return self.config[name]
     
