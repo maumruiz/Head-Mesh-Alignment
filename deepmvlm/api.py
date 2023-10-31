@@ -79,4 +79,6 @@ class DeepMVLM:
         u3d.compute_all_landmarks_from_view_lines()
         u3d.project_landmarks_to_surface(file_name)
 
+        render_3d.visualise_mesh_and_landmarks(file_name, u3d.landmarks)
+
         return u3d.landmarks
