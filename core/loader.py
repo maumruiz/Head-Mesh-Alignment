@@ -67,38 +67,20 @@ def saveObjFile(filename, vertices, faces):
     ofile.close()
 
 def updateObjVertices(in_filename, out_filename, vertices):
+    os.makedirs(os.path.dirname(out_filename), exist_ok=True)
     fin = open(f'{in_filename}.obj', 'r')
-    
-    lines1 = []
-    lines2 = []
-    foundVertices = False
+    ofile = open(f"{out_filename}.obj", 'w')
 
+    v = 0
     for line in fin:
         values = line.split()
 
-        if len(values) == 0 or values[0][0] in ['#', '\0', ' ']:
-            if foundVertices:
-                lines2.append(line)
-            else:
-                lines1.append(line)
-        elif values[0] == 'v':
-            foundVertices = True
+        if len(values) > 0 and values[0] == 'v':
+            ofile.write(f"v {vertices[v][0]} {vertices[v][1]} {vertices[v][2]}\n")
+            v += 1
         else:
-            if foundVertices:
-                lines2.append(line)
-            else:
-                lines1.append(line)
+            ofile.write(line)
     
     fin.close()
-
-    vertices_lines = []
-    for item in vertices:
-        vertices_lines.append(f"v {item[0]} {item[1]} {item[2]}\n")
-    
-    final_lines = lines1 + vertices_lines + lines2
-
-    os.makedirs(os.path.dirname(out_filename), exist_ok=True)
-    ofile = open(f"{out_filename}.obj", 'w')
-    for line in final_lines:
-        ofile.write(line)
     ofile.close()
+    
