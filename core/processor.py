@@ -16,18 +16,26 @@ class Processor:
         self.timestamp = datetime.now().strftime(r'%y%m%d_%H%M%S')
 
     def align(self):
+        in_filename = f'input/{self.target_filename}'
         out_filename = f'output/{self.target_filename}_aligned.obj'
 
-        prealignedFilename = self.preAlignMesh()
-        landmarksFilename = self.detectLandmarks(f'{prealignedFilename}.obj')
-        alignedFilename = self.scaleICP(landmarksFilename, prealignedFilename, self.target_filename)
-        shutil.copy(f'{alignedFilename}.obj', out_filename)
+        aligned_filename = f'tmp/{self.timestamp}/{self.target_filename}_prealigned'
+        self.preAlignMesh(in_filename, aligned_filename)
+
+        ## TODO: add iterations (to execute at least 2 times)
+        for i in range(1, 3):
+            print(f'##### Iteration {i} #####')
+            landmarksFilename = f'tmp/{self.timestamp}/{self.target_filename}_landmarks_{i}'
+            self.detectLandmarks(f'{aligned_filename}.obj', landmarksFilename)
+            out_aligned_file = f'tmp/{self.timestamp}/{self.target_filename}_aligned_{i}'
+            self.scaleICP(landmarksFilename, aligned_filename, out_aligned_file)
+            aligned_filename = out_aligned_file
+
+        shutil.copy(f'{aligned_filename}.obj', out_filename)
         print(f"-----Result saved in {out_filename}")
 
-    def preAlignMesh(self):
+    def preAlignMesh(self, in_filename, out_filename):
         print('--- Prealigning mesh...')
-        in_filename = f'input/{self.target_filename}'
-        out_filename = f'tmp/{self.timestamp}/{self.target_filename}_prealigned'
 
         t_vertices, _ = loadObjFile(in_filename)
         targetCentroid = getCentroid(t_vertices)
@@ -43,11 +51,9 @@ class Processor:
         print(f'Scale ratio: {euc_ratio}')
 
         updateObjVertices(in_filename, out_filename, scaled_vertices)
-        return out_filename
 
-    def detectLandmarks(self, in_filename):
+    def detectLandmarks(self, in_filename, out_filename):
         print('--- Detecting landmarks...')
-        out_filename = f'tmp/{self.timestamp}/{self.target_filename}_landmarks'
         
         config = ConfigParser(f'deepmvlm/configs/{CONFIG_FILE}', self.timestamp)
         dm = DeepMVLM(config)
@@ -56,9 +62,7 @@ class Processor:
 
         return out_filename
 
-    def scaleICP(self, landmarks, in_file, mesh_name):
+    def scaleICP(self, landmarks, in_file, out_filename):
         print("---Aligning with ICP...")
         base_landmarks = f'assets/base_landmarks'
-        out_filename = f'tmp/{self.timestamp}/{mesh_name}_aligned'
         subprocess.run(["./scaleICP/scaleICP.exe", landmarks, base_landmarks, in_file, out_filename])
-        return out_filename
