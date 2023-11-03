@@ -25,14 +25,14 @@ class DeepMVLM:
         self.device, self.model = self._get_device_and_load_model_from_url()
 
     def _get_device_and_load_model_from_url(self):
-        print('Initialising model')
+        print('Initialising model...')
         image_channels = self.config['image_channels']
         model = MVLMModel(image_channels=image_channels)
 
-        print('Getting device')
+        # print('Getting device')
         device, device_ids = self._prepare_device(self.config['n_gpu'])#####
 
-        print('Loading checkpoint')
+        # print('Loading checkpoint')
         model_dir = 'deepmvlm/models/'
         model_name = 'MVLMModel_DTU3D'
         name_channels = model_name + '-' + image_channels
@@ -65,7 +65,7 @@ class DeepMVLM:
         list_ids = list(range(n_gpu_use))
         return device, list_ids
     
-    def predict(self, file_name):
+    def predict(self, file_name, out_filename):
         render_3d = Render3D(self.config)
         image_stack, transform_stack = render_3d.render_3d_file(file_name)
         
@@ -79,6 +79,6 @@ class DeepMVLM:
         u3d.compute_all_landmarks_from_view_lines()
         u3d.project_landmarks_to_surface(file_name)
 
-        render_3d.visualise_mesh_and_landmarks(file_name, u3d.landmarks)
+        render_3d.visualise_mesh_and_landmarks(file_name, u3d.landmarks, out_filename)
 
         return u3d.landmarks

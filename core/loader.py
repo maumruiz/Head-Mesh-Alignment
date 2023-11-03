@@ -3,8 +3,6 @@ import os
 
 def loadObjFile(filename):
     vPos = []
-    vColors = []
-    fIdx = []
     fin = open(f'{filename}.obj', 'r')
     for line in fin:
         values = line.split() # split by whitespace
@@ -13,20 +11,12 @@ def loadObjFile(filename):
             continue
 
         if values[0] == 'v':
-            vertices = [float(x) for x in values[1:]]
+            vertices = [float(x) for x in values[1:4]]
             vPos.append(vertices)
-            vColors.append([0.9, 0.9, 0.9])
-
-        if values[0] == 'f':
-            faceIndices = [int(x.split('/')[0]) for x in values[1:]]
-            fIdx.append(faceIndices)
 
     fin.close()
     vPos = np.array(vPos)
-    vColors = np.array(vColors)
-    fIdx = np.array(fIdx)
-
-    return vPos, fIdx
+    return vPos
 
 def loadXyzFile(filename):
     vPos = []
@@ -73,8 +63,11 @@ def updateObjVertices(in_filename, out_filename, vertices):
 
     v = 0
     for line in fin:
+        # Remove nul chars from the line
+        line = line.rstrip('\x00')
         values = line.split()
 
+        # TODO: Update only vertices values when there are vertex weights (v x y z [w])
         if len(values) > 0 and values[0] == 'v':
             ofile.write(f"v {vertices[v][0]} {vertices[v][1]} {vertices[v][2]}\n")
             v += 1

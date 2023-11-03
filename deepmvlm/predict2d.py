@@ -42,7 +42,7 @@ class Predict2D:
             cur_id = cur_id + batch_size
 
         end = time.time()
-        print("Model prediction time: " + str(end - start))
+        # print("Model prediction time: " + str(end - start))
         return heatmap_maxima
     
     def find_maxima_in_batch_of_heatmaps(self, heatmaps, cur_id, heatmap_maxima):
@@ -62,7 +62,7 @@ class Predict2D:
                 py = coordinates[lm_no][1]
                 value = coordinates[lm_no][2]
                 if value > 1.2:  # TODO debug - really bad hack due to weird max in heatmaps
-                    print("Found heatmap with value > 1.2 LM {} value {} pos {} {}  ".format(lm_no, value, px, py))
+                    # print("Found heatmap with value > 1.2 LM {} value {} pos {} {}  ".format(lm_no, value, px, py))
                     value = 0
                 # if lm_no == 0:
                 # print('LM value and pos', lm_no, value, px, py)

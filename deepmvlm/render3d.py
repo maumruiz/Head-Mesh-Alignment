@@ -414,7 +414,7 @@ class Render3D:
 
         return image_stack
     
-    def visualise_mesh_and_landmarks(self, mesh_name, landmarks=None):
+    def visualise_mesh_and_landmarks(self, mesh_name, landmarks, out_filename):
         file_type = os.path.splitext(mesh_name)[1]
         win_size = 512
 
@@ -527,7 +527,7 @@ class Render3D:
         ren_win.Render()
 
         w2if.Modified()  # Needed here else only first rendering is put to file
-        writer_png.SetFileName(f'{self.config.save_dir}/mesh_landmarks.png')
+        writer_png.SetFileName(f'{out_filename}.png')
         writer_png.Write()
         
     @staticmethod
