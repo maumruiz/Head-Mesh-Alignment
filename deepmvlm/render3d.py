@@ -14,7 +14,8 @@ class Render3D:
     def render_3d_file(self, file_name):
         print('Rendering...')
         image_channels = self.config['image_channels']
-        file_type = (os.path.splitext(file_name)[1]).lower()
+        # file_type = (os.path.splitext(file_name)[1]).lower()
+        file_type = '.obj'
 
         image_stack = None
         transformation_stack = None
@@ -98,8 +99,7 @@ class Render3D:
 
         n_channels = 3
         image_stack = np.zeros((n_views, win_size, win_size, n_channels), dtype=np.float32)
-
-        mtl_name = os.path.splitext(file_name)[0] + '.mtl'
+        mtl_name = str(self.config.save_dir / f'{self.config.target_filename}.mtl')
         obj_dir = os.path.dirname(file_name)
         obj_in = vtk.vtkOBJImporter()
         obj_in.SetFileName(file_name)
@@ -329,13 +329,13 @@ class Render3D:
             ren.Modified()  # force actors to have the correct visibility
             ren_win.Render()
 
-            if write_image_files:
-                w2if.Modified()  # Needed here else only first rendering is put to file
-                writer_png.SetFileName(name_rgb)
-                writer_png.Write()
-            else:
-                w2if.Modified()  # Needed here else only first rendering is put to file
-                w2if.Update()
+            # if write_image_files:
+            #     w2if.Modified()  # Needed here else only first rendering is put to file
+            #     writer_png.SetFileName(name_rgb)
+            #     writer_png.Write()
+            # else:
+            w2if.Modified()  # Needed here else only first rendering is put to file
+            w2if.Update()
 
             # add rendering to image stack
             im = w2if.GetOutput()

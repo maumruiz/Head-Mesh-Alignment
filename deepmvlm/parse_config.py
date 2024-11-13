@@ -9,8 +9,9 @@ def read_json(fname):
         return json.load(handle, object_hook=OrderedDict)
 
 class ConfigParser:
-    def __init__(self, config_filename, timestamp):
+    def __init__(self, config_filename, timestamp, target_filename):
         self.cfg_fname = Path(config_filename)
+        self.target_filename = target_filename
 
         # load config file
         self.config = read_json(self.cfg_fname)
